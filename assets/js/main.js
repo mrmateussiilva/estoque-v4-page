@@ -192,30 +192,25 @@ async function generateOrder() {
     document.getElementById("orderForm").reset();
 }
 
-let category = document.getElementById("productCategory")
-category.addEventListener("change", (e) => {
-    const formContainer = document.querySelector("#resultForm")
+const category = document.getElementById("productCategory");
+const formTinta = document.getElementById("form-tinta");
+const formPapel = document.getElementById("form-papel");
 
+category.addEventListener("change", () => {
+    // Esconde todos os formulários
+    formTinta.classList.add("hidden-form");
+    formPapel.classList.add("hidden-form");
+
+    // Mostra o formulário correspondente
     if (category.value === "tinta") {
-        document.getElementById("form-tinta").classList.remove("hidden-form")
-    } if (category.value === "papel") {
-        document.getElementById("form-papel").classList.remove("hidden-form")
-
+        formTinta.classList.remove("hidden-form");
+    } else if (category.value === "papel") {
+        formPapel.classList.remove("hidden-form");
     }
-    else {
-        document.getElementById("form-tinta").classList.add("hidden-form")
-
-    }
-})
+});
 
 
 // Mostrar/esconder seções
-function showSection(sectionId) {
-    document.querySelectorAll(".section").forEach(section => section.style.display = "none");
-    document.getElementById(`${sectionId}Section`).style.display = "block";
-    if (sectionId === "charts") renderTable(); // Atualiza gráfico ao abrir
-    if (window.innerWidth <= 768) toggleSidebar();
-}
 
 // Toggle sidebar
 function toggleSidebar() {
@@ -227,5 +222,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderTable();
     await renderSuppliers();
     await updateSupplierSelect();
-    showSection("stock");
 });
