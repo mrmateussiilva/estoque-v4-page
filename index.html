@@ -288,6 +288,18 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
     <script src="assets/js/main.js" type="module"></script>
     <script src="assets/js/graph.js" type="module"></script>
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll(".section").forEach(section => section.style.display = "none");
+            document.getElementById(`${sectionId}Section`).style.display = "block";
+            if (sectionId === "charts") renderTable(); // Atualiza gráfico ao abrir
+            if (window.innerWidth <= 768) toggleSidebar();
+        }
+        document.addEventListener("DOMContentLoaded", async () => {
+            showSection("stock");
+        });
+
+    </script>
 </body>
 
 </html>
