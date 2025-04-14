@@ -130,6 +130,7 @@
                                     <th>Tipo</th>
                                     <th>Quantidade (Rolos)</th>
                                     <th>Metros por Rolo</th>
+                                    <th>Total Metros</th>
                                     <th>Quantidade Mínima</th>
                                     <th>Ações</th>
                                 </tr>
@@ -347,11 +348,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
     <script>
-        const API_URL = "https://estoque-v4.onrender.com";
+ const API_URL = "https://estoque-v4.onrender.com";
 const category = document.getElementById("productCategory");
 const formTinta = document.getElementById("form-tinta");
 const formPapel = document.getElementById("form-papel");
 const formTecido = document.getElementById("form-tecido");
+
+// Paper type mapping
+const paperTypeMap = {
+    papel1: "Art 45gr 160x250",
+    papel2: "Art 45gr 180x400",
+    papel3: "Art 45gr 160x1000",
+    papel4: "Coldenhove 40gr 162x400",
+    papel5: "Seda 20gr 160x1000",
+    papel6: "Kraft 35gr 160x500"
+};
 
 // Fetch data for each category
 async function fetchTinta() {
@@ -430,11 +441,14 @@ async function renderPapelTable() {
     const tableBody = document.getElementById("papelTableBody");
     tableBody.innerHTML = "";
     papeis.forEach(papel => {
+        const displayName = paperTypeMap[papel.type] || papel.type; // Fallback to type if not mapped
+        const totalMetros = papel.qtyUnit * papel.qtyMetros;
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${papel.type}</td>
+            <td>${displayName}</td>
             <td>${papel.qtyUnit}</td>
             <td>${papel.qtyMetros}</td>
+            <td>${totalMetros}</td>
             <td>${papel.qtyMin || 0}</td>
             <td>
                 <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id})">
@@ -478,7 +492,6 @@ async function addProduct() {
             const productQtyLitros = parseFloat(document.getElementById("productQtyLitros").value);
             const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
-            // Validate inputs
             if (!color || !type) throw new Error("Cor e tipo de tinta são obrigatórios");
             if (isNaN(productQty) || productQty <= 0) throw new Error("Quantidade deve ser um número positivo");
             if (isNaN(productQtyLitros) || productQtyLitros <= 0) throw new Error("Litros por frasco deve ser um número positivo");
@@ -493,7 +506,6 @@ async function addProduct() {
             const qtyMetros = parseInt(document.getElementById("productQtyMetros").value);
             const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
-            // Validate inputs
             if (!type) throw new Error("Tipo de papel é obrigatório");
             if (isNaN(qtyUnit) || qtyUnit <= 0) throw new Error("Quantidade de rolos deve ser um número positivo");
             if (isNaN(qtyMetros) || qtyMetros <= 0) throw new Error("Metros por rolo deve ser um número positivo");
@@ -508,7 +520,6 @@ async function addProduct() {
             const width = parseFloat(document.getElementById("productWidth").value);
             const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
-            // Validate inputs
             if (!type) throw new Error("Tipo de tecido é obrigatório");
             if (isNaN(qtyMetros) || qtyMetros <= 0) throw new Error("Quantidade de metros deve ser um número positivo");
             if (isNaN(width) || width <= 0) throw new Error("Largura deve ser um número positivo");
@@ -521,7 +532,6 @@ async function addProduct() {
             throw new Error("Categoria inválida selecionada");
         }
 
-        // Send POST request
         const response = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -533,17 +543,14 @@ async function addProduct() {
             throw new Error(errorData.detail || `Failed to add ${categoryName}`);
         }
 
-        // Success: Reset form, close modal, refresh table
         document.getElementById("addProductForm").reset();
         const modal = bootstrap.Modal.getInstance(document.getElementById("addProductModal"));
         modal.hide();
 
-        // Refresh the relevant table
         if (categoryName === "tinta") await renderTintaTable();
         else if (categoryName === "papel") await renderPapelTable();
         else if (categoryName === "tecido") await renderTecidoTable();
 
-        // Update product selects
         await updateProductSelects();
 
         alert(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} adicionado com sucesso!`);
@@ -571,7 +578,7 @@ async function removeProduct(category, id) {
     }
 }
 
-// Search functionality (unchanged from previous)
+// Search functionality
 document.getElementById("searchInput").addEventListener("input", async function () {
     const query = this.value.toLowerCase();
     const activeTab = document.querySelector("#stockTabs .nav-link.active").id;
@@ -602,16 +609,19 @@ document.getElementById("searchInput").addEventListener("input", async function 
     } else if (activeTab === "papel-tab") {
         const papeis = await fetchPapel();
         const filtered = papeis.filter(papel => 
-            papel.type.toLowerCase().includes(query)
+            (paperTypeMap[papel.type] || papel.type).toLowerCase().includes(query)
         );
         const tableBody = document.getElementById("papelTableBody");
         tableBody.innerHTML = "";
         filtered.forEach(papel => {
+            const displayName = paperTypeMap[papel.type] || papel.type;
+            const totalMetros = papel.qtyUnit * papel.qtyMetros;
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${papel.type}</td>
+                <td>${displayName}</td>
                 <td>${papel.qtyUnit}</td>
                 <td>${papel.qtyMetros}</td>
+                <td>${totalMetros}</td>
                 <td>${papel.qtyMin || 0}</td>
                 <td>
                     <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id})">
@@ -646,7 +656,7 @@ document.getElementById("searchInput").addEventListener("input", async function 
     }
 });
 
-// Update product selects (unchanged)
+// Update product selects
 async function updateProductSelects() {
     const tintas = await fetchTinta();
     const papeis = await fetchPapel();
@@ -664,7 +674,7 @@ async function updateProductSelects() {
         papeis.forEach(papel => {
             const option = document.createElement("option");
             option.value = `papel_${papel.id}`;
-            option.textContent = `Papel: ${papel.type}`;
+            option.textContent = `Papel: ${paperTypeMap[papel.type] || papel.type}`;
             select.appendChild(option);
         });
         tecidos.forEach(tecido => {
@@ -676,7 +686,7 @@ async function updateProductSelects() {
     });
 }
 
-// Form visibility (unchanged)
+// Form visibility
 category.addEventListener("change", () => {
     formTinta.classList.add("hidden-form");
     formPapel.classList.add("hidden-form");
@@ -690,7 +700,7 @@ category.addEventListener("change", () => {
     }
 });
 
-// Tab change handling (unchanged)
+// Tab change handling
 document.getElementById("stockTabs").addEventListener("shown.bs.tab", async function (event) {
     const target = event.target.id;
     if (target === "tinta-tab") {
@@ -702,7 +712,21 @@ document.getElementById("stockTabs").addEventListener("shown.bs.tab", async func
     }
 });
 
-// Initialize (unchanged)
+// UI functions
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("active");
+}
+
+function showSection(sectionId) {
+    document.querySelectorAll(".section").forEach(section => section.style.display = "none");
+    document.getElementById(`${sectionId}Section`).style.display = "block";
+    if (sectionId === "stock") {
+        renderTintaTable(); // Default to tinta tab
+    }
+    if (window.innerWidth <= 768) toggleSidebar();
+}
+
+// Initialize
 document.addEventListener("DOMContentLoaded", async () => {
     await renderTintaTable();
     await renderSuppliers();
