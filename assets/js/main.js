@@ -270,7 +270,7 @@ async function editProduct(categoryName, id) {
         modal.show();
     } catch (error) {
         console.error(error);
-        alert(`Erro ao carregar ${categoryName.replace('-', ' ')} para edição: ${error.message}`);
+        //(`Erro ao carregar ${categoryName.replace('-', ' ')} para edição: ${error.message}`);
     }
 }
 
@@ -370,10 +370,10 @@ async function saveProduct() {
 
         await updateProductSelects();
 
-        alert(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace('-', ' ')} ${editProductId ? "atualizado" : "adicionado"} com sucesso!`);
+        //(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace('-', ' ')} ${editProductId ? "atualizado" : "adicionado"} com sucesso!`);
     } catch (error) {
         console.error(error);
-        alert(`Erro ao ${document.getElementById("editProductId").value ? "atualizar" : "adicionar"} ${category.value.replace('-', ' ')}: ${error.message}`);
+        //(`Erro ao ${document.getElementById("editProductId").value ? "atualizar" : "adicionar"} ${category.value.replace('-', ' ')}: ${error.message}`);
     }
 }
 
@@ -391,7 +391,7 @@ async function removeProduct(category, id) {
             await updateProductSelects();
         } catch (error) {
             console.error(error);
-            alert(`Erro ao remover ${category.replace('-', ' ')}: ${error.message}`);
+            //(`Erro ao remover ${category.replace('-', ' ')}: ${error.message}`);
         }
     }
 }
@@ -574,10 +574,10 @@ async function addSupplier(event) {
         modal.hide();
         await renderSuppliers();
         await updateSupplierSelect();
-        alert("Fornecedor adicionado com sucesso!");
+        //("Fornecedor adicionado com sucesso!");
     } catch (error) {
         console.error(error);
-        alert(`Erro ao adicionar fornecedor: ${error.message}`);
+        //(`Erro ao adicionar fornecedor: ${error.message}`);
     }
 }
 
@@ -590,7 +590,7 @@ async function removeSupplier(id) {
             await updateSupplierSelect();
         } catch (error) {
             console.error(error);
-            alert(`Erro ao remover fornecedor: ${error.message}`);
+            //(`Erro ao remover fornecedor: ${error.message}`);
         }
     }
 }
