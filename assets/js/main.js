@@ -200,7 +200,7 @@ function prepareAddProduct() {
     document.getElementById("saveProductButton").textContent = "Salvar";
     document.getElementById("editProductId").value = "";
     document.getElementById("addProductForm").reset();
-    category.value = ""; // Reset category
+    category.value = "";
     category.dispatchEvent(new Event("change"));
 }
 
@@ -230,16 +230,13 @@ async function editProduct(categoryName, id) {
             endpoint = `${API_URL}/products-tecido-cortado/${id}`;
         }
 
-        // Open modal and set title
         document.getElementById("addProductModalLabel").textContent = `Editar ${categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace('-', ' ')}`;
         document.getElementById("saveProductButton").textContent = "Atualizar";
         document.getElementById("editProductId").value = id;
 
-        // Set category and trigger form visibility
         category.value = categoryName;
         category.dispatchEvent(new Event("change"));
 
-        // Populate form fields
         if (categoryName === "tinta") {
             document.getElementById("typeColor").value = product.color;
             document.getElementById("typeTinta").value = product.type;
@@ -265,12 +262,11 @@ async function editProduct(categoryName, id) {
             document.getElementById("productQtyMin").value = product.qtyMin || 0;
         }
 
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById("addProductModal"));
         modal.show();
     } catch (error) {
         console.error(error);
-        //(`Erro ao carregar ${categoryName.replace('-', ' ')} para edição: ${error.message}`);
+        alert(`Erro ao carregar ${categoryName.replace('-', ' ')} para edição: ${error.message}`);
     }
 }
 
@@ -370,10 +366,10 @@ async function saveProduct() {
 
         await updateProductSelects();
 
-        //(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace('-', ' ')} ${editProductId ? "atualizado" : "adicionado"} com sucesso!`);
+        alert(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace('-', ' ')} ${editProductId ? "atualizado" : "adicionado"} com sucesso!`);
     } catch (error) {
         console.error(error);
-        //(`Erro ao ${document.getElementById("editProductId").value ? "atualizar" : "adicionar"} ${category.value.replace('-', ' ')}: ${error.message}`);
+        alert(`Erro ao ${document.getElementById("editProductId").value ? "atualizar" : "adicionar"} ${category.value.replace('-', ' ')}: ${error.message}`);
     }
 }
 
@@ -391,7 +387,7 @@ async function removeProduct(category, id) {
             await updateProductSelects();
         } catch (error) {
             console.error(error);
-            //(`Erro ao remover ${category.replace('-', ' ')}: ${error.message}`);
+            alert(`Erro ao remover ${category.replace('-', ' ')}: ${error.message}`);
         }
     }
 }
@@ -574,10 +570,10 @@ async function addSupplier(event) {
         modal.hide();
         await renderSuppliers();
         await updateSupplierSelect();
-        //("Fornecedor adicionado com sucesso!");
+        alert("Fornecedor adicionado com sucesso!");
     } catch (error) {
         console.error(error);
-        //(`Erro ao adicionar fornecedor: ${error.message}`);
+        alert(`Erro ao adicionar fornecedor: ${error.message}`);
     }
 }
 
@@ -590,7 +586,7 @@ async function removeSupplier(id) {
             await updateSupplierSelect();
         } catch (error) {
             console.error(error);
-            //(`Erro ao remover fornecedor: ${error.message}`);
+            alert(`Erro ao remover fornecedor: ${error.message}`);
         }
     }
 }
@@ -610,15 +606,99 @@ async function updateSupplierSelect() {
     });
 }
 
+// Entry and Exit functions
+async function addEntry(event) {
+    event.preventDefault();
+    try {
+        const productSelect = document.getElementById("entryProduct").value;
+        const quantity = parseFloat(document.getElementById("entryQuantity").value);
+        const supplierId = parseInt(document.getElementById("entrySupplier").value);
+
+        if (!productSelect) throw new Error("Selecione um produto");
+        if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
+        if (!supplierId) throw new Error("Selecione um fornecedor");
+
+        const [category, productId] = productSelect.split('_');
+
+        const entry = {
+            category: category,
+            product_id: parseInt(productId),
+            quantity: quantity,
+            supplier_id: supplierId
+        };
+
+        const response = await fetch(`${API_URL}/entries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(entry)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Failed to register entry");
+        }
+
+        document.getElementById("entryForm").reset();
+        if (category === "tinta") await renderTintaTable();
+        else if (category === "papel") await renderPapelTable();
+        else if (category === "tecido") await renderTecidoTable();
+        else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+
+        alert("Entrada registrada com sucesso!");
+    } catch (error) {
+        console.error(error);
+        alert(`Erro ao registrar entrada: ${error.message}`);
+    }
+}
+
+async function addExit(event) {
+    event.preventDefault();
+    try {
+        const productSelect = document.getElementById("exitProduct").value;
+        const quantity = parseFloat(document.getElementById("exitQuantity").value);
+
+        if (!productSelect) throw new Error("Selecione um produto");
+        if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
+
+        const [category, productId] = productSelect.split('_');
+
+        const exit = {
+            category: category,
+            product_id: parseInt(productId),
+            quantity: quantity
+        };
+
+        const response = await fetch(`${API_URL}/exits`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(exit)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Failed to register exit");
+        }
+
+        document.getElementById("exitForm").reset();
+        if (category === "tinta") await renderTintaTable();
+        else if (category === "papel") await renderPapelTable();
+        else if (category === "tecido") await renderTecidoTable();
+        else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+
+        alert("Saída registrada com sucesso!");
+    } catch (error) {
+        console.error(error);
+        alert(`Erro ao registrar saída: ${error.message}`);
+    }
+}
+
 // Form visibility
 category.addEventListener("change", () => {
-    // Hide all forms
     const forms = [formTinta, formPapel, formTecido, formTecidoCortado];
     forms.forEach(form => {
         if (form) form.classList.add("hidden-form");
     });
 
-    // Show the selected form
     if (category.value === "tinta" && formTinta) {
         formTinta.classList.remove("hidden-form");
     } else if (category.value === "papel" && formPapel) {
@@ -663,7 +743,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderTintaTable();
     await renderSuppliers();
     await updateSupplierSelect();
+    await updateProductSelects();
     showSection("stock");
 
     document.getElementById("addSupplierForm").addEventListener("submit", addSupplier);
+    document.getElementById("entryForm").addEventListener("submit", addEntry);
+    document.getElementById("exitForm").addEventListener("submit", addExit);
 });
