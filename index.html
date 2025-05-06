@@ -56,6 +56,12 @@
         .hidden-form {
             display: none;
         }
+        .alert-dismissible {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
         @media (min-width: 768px) {
             #sidebar {
                 left: 0;
@@ -193,7 +199,7 @@
             </div>
         </div>
 
-        <!-- Other Sections (Unchanged) -->
+        <!-- Entry Section -->
         <div id="entrySection" class="section">
             <h2>Entrada de Estoque</h2>
             <form id="entryForm">
@@ -205,7 +211,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="entryQuantity" class="form-label">Quantidade</label>
-                    <input type="number" class="form-control" id="entryQuantity" required>
+                    <input type="number" step="any" class="form-control" id="entryQuantity" min="0.01" required>
                 </div>
                 <div class="mb-3">
                     <label for="entrySupplier" class="form-label">Fornecedor</label>
@@ -217,6 +223,7 @@
             </form>
         </div>
 
+        <!-- Exit Section -->
         <div id="exitSection" class="section">
             <h2>Saída de Estoque</h2>
             <form id="exitForm">
@@ -228,12 +235,13 @@
                 </div>
                 <div class="mb-3">
                     <label for="exitQuantity" class="form-label">Quantidade</label>
-                    <input type="number" class="form-control" id="exitQuantity" required>
+                    <input type="number" step="any" class="form-control" id="exitQuantity" min="0.01" required>
                 </div>
                 <button type="submit" class="btn-custom">Registrar Saída</button>
             </form>
         </div>
 
+        <!-- Suppliers Section -->
         <div id="suppliersSection" class="section">
             <h2>Fornecedores</h2>
             <button class="btn-custom mb-3" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
@@ -254,6 +262,7 @@
             </div>
         </div>
 
+        <!-- Orders Section -->
         <div id="ordersSection" class="section">
             <h2>Pedidos</h2>
             <form id="orderForm">
@@ -265,7 +274,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="orderQuantity" class="form-label">Quantidade</label>
-                    <input type="number" class="form-control" id="orderQuantity" required>
+                    <input type="number" step="any" class="form-control" id="orderQuantity" min="0.01" required>
                 </div>
                 <div class="mb-3">
                     <label for="orderSupplier" class="form-label">Fornecedor</label>
@@ -277,6 +286,7 @@
             </form>
         </div>
 
+        <!-- Charts Section -->
         <div id="chartsSection" class="section">
             <h2>Gráficos</h2>
             <canvas id="stockChart" width="400" height="200"></canvas>
@@ -293,6 +303,7 @@
                     <div class="modal-body">
                         <form id="addProductForm">
                             <input type="hidden" id="editProductId">
+                            <input type="hidden" id="editProductCategory">
                             <div class="mb-3">
                                 <label for="productCategory" class="form-label">Categoria</label>
                                 <select class="form-select" id="productCategory" required>
@@ -453,7 +464,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -473,6 +483,19 @@
             papel5: "Seda 20gr 160x1000",
             papel6: "Kraft 35gr 160x500"
         };
+
+        // Show alert
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = `alert alert-${type} alert-dismissible fade show`;
+            alertContainer.role = 'alert';
+            alertContainer.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alertContainer);
+            setTimeout(() => alertContainer.remove(), 5000);
+        }
 
         // Fetch data
         async function fetchTinta() {
@@ -510,9 +533,9 @@
 
         async function fetchTecidoCortado() {
             try {
-                const response = await fetch("https://estoque-v4.onrender.com/products-tecido-cortado");
+                const response = await fetch(`${API_URL}/products-tecido-cortado`);
                 const data = await response.json();
-                console.log("Resposta da API para tecidos cortados:", data); // Depuração
+                console.log("Resposta da API para tecidos cortados:", data);
                 if (!response.ok) throw new Error("Failed to fetch tecidos cortados");
                 return data;
             } catch (error) {
@@ -532,6 +555,17 @@
             }
         }
 
+        async function fetchProduct(category, id) {
+            try {
+                const response = await fetch(`${API_URL}/products-${category}/${id}`);
+                if (!response.ok) throw new Error(`Failed to fetch ${category} ${id}`);
+                return await response.json();
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+
         // Render tables
         async function renderTintaTable() {
             const tintas = await fetchTinta();
@@ -548,6 +582,9 @@
                     <td>${totalLitros}</td>
                     <td>${tinta.qtyMin || 0}</td>
                     <td>
+                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
                         <button class="btn btn-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id})">
                             <i class="bi bi-trash"></i> Remover
                         </button>
@@ -572,6 +609,9 @@
                     <td>${totalMetros || 0}</td>
                     <td>${papel.qtyMin || 0}</td>
                     <td>
+                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
                         <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id})">
                             <i class="bi bi-trash"></i> Remover
                         </button>
@@ -593,6 +633,9 @@
                     <td>${tecido.width || 0}</td>
                     <td>${tecido.qtyMin || 0}</td>
                     <td>
+                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
                         <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id})">
                             <i class="bi bi-trash"></i> Remover
                         </button>
@@ -604,7 +647,7 @@
 
         async function renderTecidoCortadoTable() {
             const tecidosCortados = await fetchTecidoCortado();
-            console.log("Dados para renderizar tecidos cortados:", tecidosCortados); // Depuração
+            console.log("Dados para renderizar tecidos cortados:", tecidosCortados);
             const tableBody = document.getElementById("tecidoCortadoTableBody");
             tableBody.innerHTML = "";
             if (!tecidosCortados || tecidosCortados.length === 0) {
@@ -614,16 +657,16 @@
                 return;
             }
             tecidosCortados.forEach(tecido => {
-                const medida = tecido.medidaLargura && tecido.medidaAltura 
-                    ? `${tecido.medidaLargura}x${tecido.medidaAltura}` 
-                    : '-';
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${tecido.type || '-'}</td>
                     <td>${tecido.quantity || 0}</td>
-                    <td>${tecido.measurement}</td>
+                    <td>${tecido.measurement || '-'}</td>
                     <td>${tecido.qtyMin || 0}</td>
                     <td>
+                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id || 0})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
                         <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id || 0})">
                             <i class="bi bi-trash"></i> Remover
                         </button>
@@ -653,11 +696,62 @@
             });
         }
 
-        // Add product
-        async function addProduct() {
+        // Edit product
+        async function editProduct(category, id) {
+            const product = await fetchProduct(category, id);
+            if (!product) {
+                showAlert(`Erro ao carregar ${category} para edição`, 'danger');
+                return;
+            }
+
+            document.getElementById("addProductModalLabel").textContent = `Editar ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+            document.getElementById("editProductId").value = id;
+            document.getElementById("editProductCategory").value = category;
+            document.getElementById("productCategory").value = category;
+            document.getElementById("productCategory").dispatchEvent(new Event('change'));
+
+            if (category === "tinta") {
+                document.getElementById("typeColor").value = product.color || '';
+                document.getElementById("typeTinta").value = product.type || '';
+                document.getElementById("productQty").value = product.productQty || '';
+                document.getElementById("productQtyLitros").value = product.productQtyLitros || '';
+                document.getElementById("productQtyMin").value = product.qtyMin || '';
+            } else if (category === "papel") {
+                document.getElementById("typePapel").value = product.type || '';
+                document.getElementById("productQtyUnit").value = product.qtyUnit || '';
+                document.getElementById("productQtyMetros").value = product.qtyMetros || '';
+                document.getElementById("productQtyMin").value = product.qtyMin || '';
+            } else if (category === "tecido") {
+                document.getElementById("typeTecido").value = product.type || '';
+                document.getElementById("productQtyMetrosTecido").value = product.qtyMetros || '';
+                document.getElementById("productWidth").value = product.width || '';
+                document.getElementById("productQtyMin").value = product.qtyMin || '';
+            } else if (category === "tecido-cortado") {
+                document.getElementById("typeTecidoCortado").value = product.type || '';
+                document.getElementById("productQtyTecidoCortado").value = product.quantity || '';
+                if (product.measurement && product.measurement.includes('x')) {
+                    const [width, height] = product.measurement.split('x').map(parseFloat);
+                    document.getElementById("productMedidaLargura").value = width || '';
+                    document.getElementById("productMedidaAltura").value = height || '';
+                } else {
+                    document.getElementById("productMedidaLargura").value = '';
+                    document.getElementById("productMedidaAltura").value = '';
+                }
+                document.getElementById("productQtyMin").value = product.qtyMin || '';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById("addProductModal"));
+            modal.show();
+        }
+
+        // Save product (handles both add and edit)
+        async function saveProduct() {
+            const editId = document.getElementById("editProductId").value;
+            const category = editId ? document.getElementById("editProductCategory").value : document.getElementById("productCategory").value;
+
             try {
-                let product, endpoint, categoryName;
-                if (category.value === "tinta") {
+                let product, endpoint, categoryName, method;
+                if (category === "tinta") {
                     const color = document.getElementById("typeColor").value;
                     const type = document.getElementById("typeTinta").value;
                     const productQty = parseInt(document.getElementById("productQty").value);
@@ -670,9 +764,9 @@
                     if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
                     product = { color, type, productQty, productQtyLitros, qtyMin };
-                    endpoint = `${API_URL}/products-tinta`;
+                    endpoint = editId ? `${API_URL}/products-tinta/${editId}` : `${API_URL}/products-tinta`;
                     categoryName = "tinta";
-                } else if (category.value === "papel") {
+                } else if (category === "papel") {
                     const type = document.getElementById("typePapel").value;
                     const qtyUnit = parseInt(document.getElementById("productQtyUnit").value);
                     const qtyMetros = parseInt(document.getElementById("productQtyMetros").value);
@@ -684,9 +778,9 @@
                     if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
                     product = { type, qtyUnit, qtyMetros, qtyMin };
-                    endpoint = `${API_URL}/products-papel`;
+                    endpoint = editId ? `${API_URL}/products-papel/${editId}` : `${API_URL}/products-papel`;
                     categoryName = "papel";
-                } else if (category.value === "tecido") {
+                } else if (category === "tecido") {
                     const type = document.getElementById("typeTecido").value;
                     const qtyMetros = parseFloat(document.getElementById("productQtyMetrosTecido").value);
                     const width = parseFloat(document.getElementById("productWidth").value);
@@ -698,40 +792,44 @@
                     if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
                     product = { type, qtyMetros, width, qtyMin };
-                    endpoint = `${API_URL}/products-tecido`;
+                    endpoint = editId ? `${API_URL}/products-tecido/${editId}` : `${API_URL}/products-tecido`;
                     categoryName = "tecido";
-                } else if (category.value === "tecido-cortado") {
+                } else if (category === "tecido-cortado") {
                     const type = document.getElementById("typeTecidoCortado").value;
-                    const qty = parseInt(document.getElementById("productQtyTecidoCortado").value);
+                    const quantity = parseInt(document.getElementById("productQtyTecidoCortado").value);
                     const medidaLargura = parseFloat(document.getElementById("productMedidaLargura").value);
                     const medidaAltura = parseFloat(document.getElementById("productMedidaAltura").value);
                     const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
                     if (!type) throw new Error("Tipo de tecido cortado é obrigatório");
-                    if (isNaN(qty) || qty <= 0) throw new Error("Quantidade deve ser um número positivo");
+                    if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
                     if (isNaN(medidaLargura) || medidaLargura <= 0) throw new Error("Largura deve ser um número positivo");
                     if (isNaN(medidaAltura) || medidaAltura <= 0) throw new Error("Altura deve ser um número positivo");
                     if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
-                    product = { type, qty, medidaLargura, medidaAltura, qtyMin };
-                    endpoint = `${API_URL}/products-tecido-cortado`;
+                    const measurement = `${medidaLargura}x${medidaAltura}`;
+                    product = { type, quantity, measurement, qtyMin };
+                    endpoint = editId ? `${API_URL}/products-tecido-cortado/${editId}` : `${API_URL}/products-tecido-cortado`;
                     categoryName = "tecido-cortado";
                 } else {
                     throw new Error("Categoria inválida selecionada");
                 }
 
+                method = editId ? "PUT" : "POST";
                 const response = await fetch(endpoint, {
-                    method: "POST",
+                    method,
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(product)
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || `Failed to add ${categoryName}`);
+                    throw new Error(errorData.detail || `Failed to ${editId ? 'edit' : 'add'} ${categoryName}`);
                 }
 
                 document.getElementById("addProductForm").reset();
+                document.getElementById("editProductId").value = "";
+                document.getElementById("editProductCategory").value = "";
                 const modal = bootstrap.Modal.getInstance(document.getElementById("addProductModal"));
                 modal.hide();
 
@@ -741,9 +839,11 @@
                 else if (categoryName === "tecido-cortado") await renderTecidoCortadoTable();
 
                 await updateProductSelects();
+                showAlert(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} ${editId ? 'editado' : 'adicionado'} com sucesso!`);
 
             } catch (error) {
                 console.error(error);
+                showAlert(`Erro: ${error.message}`, 'danger');
             }
         }
 
@@ -759,9 +859,94 @@
                     else if (category === "tecido") await renderTecidoTable();
                     else if (category === "tecido-cortado") await renderTecidoCortadoTable();
                     await updateProductSelects();
+                    showAlert(`${category.charAt(0).toUpperCase() + category.slice(1)} removido com sucesso!`);
                 } catch (error) {
                     console.error(error);
+                    showAlert(`Erro ao remover ${category}: ${error.message}`, 'danger');
                 }
+            }
+        }
+
+        // Handle stock entry
+        async function handleStockEntry(event) {
+            event.preventDefault();
+            try {
+                const productSelect = document.getElementById("entryProduct").value;
+                const quantity = parseFloat(document.getElementById("entryQuantity").value);
+                const supplierId = document.getElementById("entrySupplier").value;
+
+                if (!productSelect) throw new Error("Selecione um produto");
+                if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
+                if (!supplierId) throw new Error("Selecione um fornecedor");
+
+                const [category, productId] = productSelect.split('_');
+                const entry = {
+                    category,
+                    product_id: parseInt(productId),
+                    quantity,
+                    supplier_id: parseInt(supplierId)
+                };
+
+                const response = await fetch(`${API_URL}/entries`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(entry)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Failed to register entry");
+                }
+
+                document.getElementById("entryForm").reset();
+                if (category === "tinta") await renderTintaTable();
+                else if (category === "papel") await renderPapelTable();
+                else if (category === "tecido") await renderTecidoTable();
+                else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+                showAlert("Entrada registrada com sucesso!");
+            } catch (error) {
+                console.error(error);
+                showAlert(`Erro ao registrar entrada: ${error.message}`, 'danger');
+            }
+        }
+
+        // Handle stock exit
+        async function handleStockExit(event) {
+            event.preventDefault();
+            try {
+                const productSelect = document.getElementById("exitProduct").value;
+                const quantity = parseFloat(document.getElementById("exitQuantity").value);
+
+                if (!productSelect) throw new Error("Selecione um produto");
+                if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
+
+                const [category, productId] = productSelect.split('_');
+                const exit = {
+                    category,
+                    product_id: parseInt(productId),
+                    quantity
+                };
+
+                const response = await fetch(`${API_URL}/exits`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(exit)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Failed to register exit");
+                }
+
+                document.getElementById("exitForm").reset();
+                if (category === "tinta") await renderTintaTable();
+                else if (category === "papel") await renderPapelTable();
+                else if (category === "tecido") await renderTecidoTable();
+                else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+                showAlert("Saída registrada com sucesso!");
+            } catch (error) {
+                console.error(error);
+                showAlert(`Erro ao registrar saída: ${error.message}`, 'danger');
             }
         }
 
@@ -788,6 +973,9 @@
                         <td>${totalLitros}</td>
                         <td>${tinta.qtyMin || 0}</td>
                         <td>
+                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id || 0})">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
                             <button class="btn btn-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id || 0})">
                                 <i class="bi bi-trash"></i> Remover
                             </button>
@@ -813,6 +1001,9 @@
                         <td>${totalMetros || 0}</td>
                         <td>${papel.qtyMin || 0}</td>
                         <td>
+                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id || 0})">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
                             <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id || 0})">
                                 <i class="bi bi-trash"></i> Remover
                             </button>
@@ -835,6 +1026,9 @@
                         <td>${tecido.width || 0}</td>
                         <td>${tecido.qtyMin || 0}</td>
                         <td>
+                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id || 0})">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
                             <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id || 0})">
                                 <i class="bi bi-trash"></i> Remover
                             </button>
@@ -856,16 +1050,16 @@
                     return;
                 }
                 filtered.forEach(tecido => {
-                    const medida = tecido.medidaLargura && tecido.medidaAltura 
-                        ? `${tecido.medidaLargura}x${tecido.medidaAltura}` 
-                        : '-';
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${tecido.type || '-'}</td>
-                        <td>${tecido.qty || 0}</td>
-                        <td>${medida}</td>
+                        <td>${tecido.quantity || 0}</td>
+                        <td>${tecido.measurement || '-'}</td>
                         <td>${tecido.qtyMin || 0}</td>
                         <td>
+                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id || 0})">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
                             <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id || 0})">
                                 <i class="bi bi-trash"></i> Remover
                             </button>
@@ -882,7 +1076,7 @@
             const papeis = await fetchPapel();
             const tecidos = await fetchTecido();
             const tecidosCortados = await fetchTecidoCortado();
-            console.log("Tecidos cortados para selects:", tecidosCortados); // Depuração
+            console.log("Tecidos cortados para selects:", tecidosCortados);
             const selects = ["entryProduct", "exitProduct", "orderProduct"];
             selects.forEach(id => {
                 const select = document.getElementById(id);
@@ -908,10 +1102,7 @@
                 tecidosCortados.forEach(tecido => {
                     const option = document.createElement("option");
                     option.value = `tecido-cortado_${tecido.id || 0}`;
-                    const medida = tecido.medidaLargura && tecido.medidaAltura 
-                        ? `${tecido.medidaLargura}x${tecido.medidaAltura}` 
-                        : 'Desconhecida';
-                    option.textContent = `Tecido Cortado: ${tecido.type || 'Desconhecido'} (${medida})`;
+                    option.textContent = `Tecido Cortado: ${tecido.type || 'Desconhecido'} (${tecido.measurement || 'Desconhecida'})`;
                     select.appendChild(option);
                 });
             });
@@ -943,8 +1134,10 @@
                 modal.hide();
                 await renderSuppliers();
                 await updateSupplierSelect();
+                showAlert("Fornecedor adicionado com sucesso!");
             } catch (error) {
                 console.error(error);
+                showAlert(`Erro ao adicionar fornecedor: ${error.message}`, 'danger');
             }
         }
 
@@ -955,8 +1148,10 @@
                     if (!response.ok) throw new Error("Failed to delete supplier");
                     await renderSuppliers();
                     await updateSupplierSelect();
+                    showAlert("Fornecedor removido com sucesso!");
                 } catch (error) {
                     console.error(error);
+                    showAlert(`Erro ao remover fornecedor: ${error.message}`, 'danger');
                 }
             }
         }
@@ -1021,27 +1216,31 @@
             if (window.innerWidth <= 768) toggleSidebar();
         }
 
-        // Initialize
-        document.addEventListener("DOMContentLoaded", async () => {
-            await renderTintaTable();
-            await renderSuppliers();
-            await updateSupplierSelect();
-            showSection("stock");
-
-            document.getElementById("addSupplierForm").addEventListener("submit", addSupplier);
-        });
-
-        // Save product
-        function saveProduct() {
-            addProduct();
-        }
-
         // Prepare add product
         function prepareAddProduct() {
             document.getElementById("addProductForm").reset();
             document.getElementById("addProductModalLabel").textContent = "Adicionar Produto";
             document.getElementById("editProductId").value = "";
+            document.getElementById("editProductCategory").value = "";
+            document.getElementById("productCategory").value = "";
+            formTinta.classList.add("hidden-form");
+            formPapel.classList.add("hidden-form");
+            formTecido.classList.add("hidden-form");
+            formTecidoCortado.classList.add("hidden-form");
         }
+
+        // Initialize
+        document.addEventListener("DOMContentLoaded", async () => {
+            await renderTintaTable();
+            await renderSuppliers();
+            await updateSupplierSelect();
+            await updateProductSelects();
+            showSection("stock");
+
+            document.getElementById("addSupplierForm").addEventListener("submit", addSupplier);
+            document.getElementById("entryForm").addEventListener("submit", handleStockEntry);
+            document.getElementById("exitForm").addEventListener("submit", handleStockExit);
+        });
     </script>
 </body>
 </html>
