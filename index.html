@@ -7,70 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-        }
-        #sidebar {
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: -250px;
-            height: 100%;
-            background-color: #343a40;
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-        #sidebar.active {
-            left: 0;
-        }
-        #sidebar .nav-link {
-            color: white;
-        }
-        #sidebar .nav-link:hover {
-            background-color: #495057;
-        }
-        #content {
-            margin-left: 0;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-        .section {
-            display: none;
-        }
-        .section.active {
-            display: block;
-        }
-        .btn-custom {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .btn-custom:hover {
-            background-color: #0056b3;
-        }
-        .hidden-form {
-            display: none;
-        }
-        .alert-dismissible {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-        }
-        @media (min-width: 768px) {
-            #sidebar {
-                left: 0;
-            }
-            #content {
-                margin-left: 250px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/base.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -90,7 +27,7 @@
 
     <!-- Content -->
     <div id="content">
-        <button class="btn btn-dark mb-3" onclick="toggleSidebar()">
+        <button class="btn btn-dark mb-3" onclick="toggleSidebar()" id="toogleSIdeBar">
             <i class="bi bi-list"></i> Menu
         </button>
 
