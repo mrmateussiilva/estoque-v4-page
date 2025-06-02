@@ -3,41 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="assets/css/base.css">
+    <meta name="description" content="Sistema de gerenciamento de estoque para tintas, papéis, tecidos e fornecedores">
+    <title>Sistema de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            background-color: #f8f9fa;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            min-height: 100vh;
+            transition: transform 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        #sidebar.active {
+            transform: translateX(-250px);
+        }
+        #sidebar .nav-link {
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            background-color: #495057;
+        }
+        #content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+            transition: margin-left 0.3s ease;
+        }
+        #content.full {
+            margin-left: 0;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-custom:hover {
+            background-color: #0056b3;
+        }
+        .table-responsive {
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+        .hidden-form {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-250px);
+            }
+            #sidebar.active {
+                transform: translateX(0);
+            }
+            #content {
+                margin-left: 0;
+            }
+            #content.full {
+                margin-left: 0;
+            }
+        }
+        .chart-container {
+            max-width: 800px;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
-    <nav id="sidebar">
+    <nav id="sidebar" role="navigation" aria-label="Menu de navegação principal">
         <div class="p-3">
-            <h4 class="text-white">Menu</h4>
+            <h4 class="text-white mb-4">Menu</h4>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('stock')">Estoque</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('entry')">Entrada</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('exit')">Saída</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('suppliers')">Fornecedores</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('orders')">Pedidos</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('charts')">Gráficos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('stock')"><i class="bi bi-box-seam me-2"></i>Estoque</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('entry')"><i class="bi bi-arrow-down-circle me-2"></i>Entrada</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('exit')"><i class="bi bi-arrow-up-circle me-2"></i>Saída</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('suppliers')"><i class="bi bi-person-lines-fill me-2"></i>Fornecedores</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('orders')"><i class="bi bi-cart me-2"></i>Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('charts')"><i class="bi bi-bar-chart me-2"></i>Gráficos</a></li>
+                <li class="nav-item mt-4"><a class="nav-link text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-left me-2"></i>Sair</a></li>
             </ul>
         </div>
     </nav>
 
     <!-- Content -->
-    <div id="content">
-        <button class="btn btn-dark mb-3" onclick="toggleSidebar()" id="toogleSIdeBar">
+    <div id="content" role="main">
+        <button class="btn btn-dark mb-3 d-md-none" onclick="toggleSidebar()" id="toggleSidebar" aria-label="Alternar menu">
             <i class="bi bi-list"></i> Menu
         </button>
 
         <!-- Stock Section -->
         <div id="stockSection" class="section active">
             <h2>Estoque</h2>
-            <div class="d-flex justify-content-between mb-3">
-                <input type="text" id="searchInput" class="form-control w-50" placeholder="Pesquisar...">
-                <button class="btn-custom" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="prepareAddProduct()">
-                    <i class="bi bi-plus-circle"></i> Adicionar Produto
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <input type="text" id="searchInput" class="form-control w-auto flex-grow-1 me-2" placeholder="Pesquisar produtos..." aria-label="Pesquisar produtos">
+                <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="prepareAddProduct()" aria-label="Adicionar novo produto">
+                    <i class="bi bi-plus-circle me-1"></i> Adicionar Produto
                 </button>
             </div>
 
@@ -58,20 +144,20 @@
             </ul>
 
             <!-- Tab Content -->
-            <div class="tab-content" id="stockTabContent">
+            <div class="tab-content mt-3" id="stockTabContent">
                 <!-- Tinta Table -->
                 <div class="tab-pane fade show active" id="tinta" role="tabpanel" aria-labelledby="tinta-tab">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Cor</th>
-                                    <th>Tipo</th>
-                                    <th>Quantidade (Frascos)</th>
-                                    <th>Litros por Frasco</th>
-                                    <th>Total Litros</th>
-                                    <th>Quantidade Mínima</th>
-                                    <th>Ações</th>
+                                    <th scope="col">Cor</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col">Quantidade (Frascos)</th>
+                                    <th scope="col">Litros por Frasco</th>
+                                    <th scope="col">Total Litros</th>
+                                    <th scope="col">Quantidade Mínima</th>
+                                    <th scope="col" class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tintaTableBody"></tbody>
@@ -85,12 +171,12 @@
                         <table class="table table-striped table-hover table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Tipo</th>
-                                    <th>Quantidade (Rolos)</th>
-                                    <th>Metros por Rolo</th>
-                                    <th>Total Metros</th>
-                                    <th>Quantidade Mínima</th>
-                                    <th>Ações</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col">Quantidade (Rolos)</th>
+                                    <th scope="col">Metros por Rolo</th>
+                                    <th scope="col">Total Metros</th>
+                                    <th scope="col">Quantidade Mínima</th>
+                                    <th scope="col" class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="papelTableBody"></tbody>
@@ -104,11 +190,11 @@
                         <table class="table table-striped table-hover table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Tipo</th>
-                                    <th>Quantidade (Metros)</th>
-                                    <th>Largura (cm)</th>
-                                    <th>Quantidade Mínima</th>
-                                    <th>Ações</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col">Quantidade (Metros)</th>
+                                    <th scope="col">Largura (cm)</th>
+                                    <th scope="col">Quantidade Mínima</th>
+                                    <th scope="col" class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tecidoTableBody"></tbody>
@@ -122,11 +208,11 @@
                         <table class="table table-striped table-hover table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Tipo</th>
-                                    <th>Quantidade</th>
-                                    <th>Medida (LxA)</th>
-                                    <th>Quantidade Mínima</th>
-                                    <th>Ações</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col">Quantidade</th>
+                                    <th scope="col">Medida (LxA, cm)</th>
+                                    <th scope="col">Quantidade Mínima</th>
+                                    <th scope="col" class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tecidoCortadoTableBody"></tbody>
@@ -139,59 +225,64 @@
         <!-- Entry Section -->
         <div id="entrySection" class="section">
             <h2>Entrada de Estoque</h2>
-            <form id="entryForm">
+            <form id="entryForm" class="needs-validation" novalidate>
                 <div class="mb-3">
                     <label for="entryProduct" class="form-label">Produto</label>
-                    <select class="form-select" id="entryProduct" required>
+                    <select class="form-select" id="entryProduct" required aria-describedby="entryProductFeedback">
                         <option value="" disabled selected>Selecione um produto</option>
                     </select>
+                    <div id="entryProductFeedback" class="invalid-feedback">Selecione um produto.</div>
                 </div>
                 <div class="mb-3">
                     <label for="entryQuantity" class="form-label">Quantidade</label>
-                    <input type="number" step="any" class="form-control" id="entryQuantity" min="0.01" required>
+                    <input type="number" step="0.01" class="form-control" id="entryQuantity" min="0.01" required aria-describedby="entryQuantityFeedback">
+                    <div id="entryQuantityFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                 </div>
                 <div class="mb-3">
                     <label for="entrySupplier" class="form-label">Fornecedor</label>
-                    <select class="form-select" id="entrySupplier" required>
+                    <select class="form-select" id="entrySupplier" required aria-describedby="entrySupplierFeedback">
                         <option value="" disabled selected>Selecione um fornecedor</option>
                     </select>
+                    <div id="entrySupplierFeedback" class="invalid-feedback">Selecione um fornecedor.</div>
                 </div>
-                <button type="submit" class="btn-custom">Registrar Entrada</button>
+                <button type="submit" class="btn btn-custom">Registrar Entrada</button>
             </form>
         </div>
 
         <!-- Exit Section -->
         <div id="exitSection" class="section">
             <h2>Saída de Estoque</h2>
-            <form id="exitForm">
+            <form id="exitForm" class="needs-validation" novalidate>
                 <div class="mb-3">
                     <label for="exitProduct" class="form-label">Produto</label>
-                    <select class="form-select" id="exitProduct" required>
+                    <select class="form-select" id="exitProduct" required aria-describedby="exitProductFeedback">
                         <option value="" disabled selected>Selecione um produto</option>
                     </select>
+                    <div id="exitProductFeedback" class="invalid-feedback">Selecione um produto.</div>
                 </div>
                 <div class="mb-3">
                     <label for="exitQuantity" class="form-label">Quantidade</label>
-                    <input type="number" step="any" class="form-control" id="exitQuantity" min="0.01" required>
+                    <input type="number" step="0.01" class="form-control" id="exitQuantity" min="0.01" required aria-describedby="exitQuantityFeedback">
+                    <div id="exitQuantityFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                 </div>
-                <button type="submit" class="btn-custom">Registrar Saída</button>
+                <button type="submit" class="btn btn-custom">Registrar Saída</button>
             </form>
         </div>
 
         <!-- Suppliers Section -->
         <div id="suppliersSection" class="section">
             <h2>Fornecedores</h2>
-            <button class="btn-custom mb-3" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
-                <i class="bi bi-plus-circle"></i> Adicionar Fornecedor
+            <button class="btn btn-custom mb-3" data-bs-toggle="modal" data-bs-target="#addSupplierModal" aria-label="Adicionar novo fornecedor">
+                <i class="bi bi-plus-circle me-1"></i> Adicionar Fornecedor
             </button>
             <div class="table-responsive">
                 <table class="table table-striped table-hover table-bordered">
                     <thead class="table-dark">
                         <tr>
-                            <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Email</th>
-                            <th>Ações</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">Email</th>
+                            <th scope="col" class="text-end">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="suppliersTableBody"></tbody>
@@ -202,31 +293,36 @@
         <!-- Orders Section -->
         <div id="ordersSection" class="section">
             <h2>Pedidos</h2>
-            <form id="orderForm">
+            <form id="orderForm" class="needs-validation" novalidate>
                 <div class="mb-3">
                     <label for="orderProduct" class="form-label">Produto</label>
-                    <select class="form-select" id="orderProduct" required>
+                    <select class="form-select" id="orderProduct" required aria-describedby="orderProductFeedback">
                         <option value="" disabled selected>Selecione um produto</option>
                     </select>
+                    <div id="orderProductFeedback" class="invalid-feedback">Selecione um produto.</div>
                 </div>
                 <div class="mb-3">
                     <label for="orderQuantity" class="form-label">Quantidade</label>
-                    <input type="number" step="any" class="form-control" id="orderQuantity" min="0.01" required>
+                    <input type="number" step="0.01" class="form-control" id="orderQuantity" min="0.01" required aria-describedby="orderQuantityFeedback">
+                    <div id="orderQuantityFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                 </div>
                 <div class="mb-3">
                     <label for="orderSupplier" class="form-label">Fornecedor</label>
-                    <select class="form-select" id="orderSupplier" required>
+                    <select class="form-select" id="orderSupplier" required aria-describedby="orderSupplierFeedback">
                         <option value="" disabled selected>Selecione um fornecedor</option>
                     </select>
+                    <div id="orderSupplierFeedback" class="invalid-feedback">Selecione um fornecedor.</div>
                 </div>
-                <button type="submit" class="btn-custom">Gerar Pedido</button>
+                <button type="submit" class="btn btn-custom">Gerar Pedido</button>
             </form>
         </div>
 
         <!-- Charts Section -->
         <div id="chartsSection" class="section">
             <h2>Gráficos</h2>
-            <canvas id="stockChart" width="400" height="200"></canvas>
+            <div class="chart-container">
+                <canvas id="stockChart" width="400" height="200"></canvas>
+            </div>
         </div>
 
         <!-- Add/Edit Product Modal -->
@@ -235,54 +331,60 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addProductModalLabel">Adicionar Produto</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="addProductForm">
+                        <form id="addProductForm" class="needs-validation" novalidate>
                             <input type="hidden" id="editProductId">
                             <input type="hidden" id="editProductCategory">
                             <div class="mb-3">
                                 <label for="productCategory" class="form-label">Categoria</label>
-                                <select class="form-select" id="productCategory" required>
+                                <select class="form-select" id="productCategory" required aria-describedby="productCategoryFeedback">
                                     <option value="" disabled selected>Selecione uma categoria</option>
                                     <option value="tinta">Tinta</option>
                                     <option value="papel">Papel</option>
                                     <option value="tecido">Tecido</option>
                                     <option value="tecido-cortado">Tecido Cortado</option>
                                 </select>
+                                <div id="productCategoryFeedback" class="invalid-feedback">Selecione uma categoria.</div>
                             </div>
 
                             <!-- Tinta Form -->
                             <div id="form-tinta" class="hidden-form">
                                 <div class="mb-3">
                                     <label for="typeColor" class="form-label">Cor</label>
-                                    <select class="form-select" id="typeColor">
+                                    <select class="form-select" id="typeColor" required aria-describedby="typeColorFeedback">
                                         <option value="" disabled selected>Selecione a Cor</option>
                                         <option value="cyan">Cyan</option>
                                         <option value="magenta">Magenta</option>
                                         <option value="amarelo">Amarelo</option>
                                         <option value="preto">Preto</option>
                                     </select>
+                                    <div id="typeColorFeedback" class="invalid-feedback">Selecione uma cor.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="typeTinta" class="form-label">Tipo</label>
-                                    <select class="form-select" id="typeTinta">
+                                    <select class="form-select" id="typeTinta" required aria-describedby="typeTintaFeedback">
                                         <option value="" disabled selected>Selecione o Tipo</option>
                                         <option value="sublimacao">Sublimação</option>
                                         <option value="pigmentada">Pigmentada</option>
                                     </select>
+                                    <div id="typeTintaFeedback" class="invalid-feedback">Selecione um tipo.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQty" class="form-label">Quantidade (Frascos)</label>
-                                    <input type="number" class="form-control" id="productQty" min="1" required>
+                                    <input type="number" class="form-control" id="productQty" min="1" required aria-describedby="productQtyFeedback">
+                                    <div id="productQtyFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyLitros" class="form-label">Litros por Frasco</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyLitros" min="0.01" required>
+                                    <input type="number" step="0.01" class="form-control" id="productQtyLitros" min="0.01" required aria-describedby="productQtyLitrosFeedback">
+                                    <div id="productQtyLitrosFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMin" class="form-label">Quantidade Mínima</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0">
+                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0" aria-describedby="productQtyMinFeedback">
+                                    <div id="productQtyMinFeedback" class="invalid-feedback">Digite uma quantidade válida (0 ou maior).</div>
                                 </div>
                             </div>
 
@@ -290,7 +392,7 @@
                             <div id="form-papel" class="hidden-form">
                                 <div class="mb-3">
                                     <label for="typePapel" class="form-label">Tipo</label>
-                                    <select class="form-select" id="typePapel" required>
+                                    <select class="form-select" id="typePapel" required aria-describedby="typePapelFeedback">
                                         <option value="" disabled selected>Selecione o Tipo</option>
                                         <option value="papel1">Art 45gr 160x250</option>
                                         <option value="papel2">Art 45gr 180x400</option>
@@ -299,18 +401,22 @@
                                         <option value="papel5">Seda 20gr 160x1000</option>
                                         <option value="papel6">Kraft 35gr 160x500</option>
                                     </select>
+                                    <div id="typePapelFeedback" class="invalid-feedback">Selecione um tipo.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyUnit" class="form-label">Quantidade (Rolos)</label>
-                                    <input type="number" class="form-control" id="productQtyUnit" min="1" required>
+                                    <input type="number" class="form-control" id="productQtyUnit" min="1" required aria-describedby="productQtyUnitFeedback">
+                                    <div id="productQtyUnitFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMetros" class="form-label">Metros por Rolo</label>
-                                    <input type="number" class="form-control" id="productQtyMetros" min="1" required>
+                                    <input type="number" class="form-control" id="productQtyMetros" min="1" required aria-describedby="productQtyMetrosFeedback">
+                                    <div id="productQtyMetrosFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMin" class="form-label">Quantidade Mínima</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0">
+                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0" aria-describedby="productQtyMinFeedback">
+                                    <div id="productQtyMinFeedback" class="invalid-feedback">Digite uma quantidade válida (0 ou maior).</div>
                                 </div>
                             </div>
 
@@ -318,19 +424,23 @@
                             <div id="form-tecido" class="hidden-form">
                                 <div class="mb-3">
                                     <label for="typeTecido" class="form-label">Tipo</label>
-                                    <input type="text" class="form-control" id="typeTecido" required>
+                                    <input type="text" class="form-control" id="typeTecido" required aria-describedby="typeTecidoFeedback">
+                                    <div id="typeTecidoFeedback" class="invalid-feedback">Digite o tipo do tecido.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMetrosTecido" class="form-label">Quantidade (Metros)</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyMetrosTecido" min="0.01" required>
+                                    <input type="number" step="0.01" class="form-control" id="productQtyMetrosTecido" min="0.01" required aria-describedby="productQtyMetrosTecidoFeedback">
+                                    <div id="productQtyMetrosTecidoFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productWidth" class="form-label">Largura (cm)</label>
-                                    <input type="number" step="0.01" class="form-control" id="productWidth" min="0.01" required>
+                                    <input type="number" step="0.01" class="form-control" id="productWidth" min="0.01" required aria-describedby="productWidthFeedback">
+                                    <div id="productWidthFeedback" class="invalid-feedback">Digite uma largura válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMin" class="form-label">Quantidade Mínima</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0">
+                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0" aria-describedby="productQtyMinFeedback">
+                                    <div id="productQtyMinFeedback" class="invalid-feedback">Digite uma quantidade válida (0 ou maior).</div>
                                 </div>
                             </div>
 
@@ -338,35 +448,42 @@
                             <div id="form-tecido-cortado" class="hidden-form">
                                 <div class="mb-3">
                                     <label for="typeTecidoCortado" class="form-label">Tipo</label>
-                                    <select class="form-select" id="typeTecidoCortado" required>
+                                    <select class="form-select" id="typeTecidoCortado" required aria-describedby="typeTecidoCortadoFeedback">
                                         <option value="" disabled selected>Selecione o Tipo</option>
                                         <option value="malha">Malha</option>
                                         <option value="tactel">Tactel</option>
                                     </select>
+                                    <div id="typeTecidoCortadoFeedback" class="invalid-feedback">Selecione um tipo.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyTecidoCortado" class="form-label">Quantidade</label>
-                                    <input type="number" class="form-control" id="productQtyTecidoCortado" min="1" required>
+                                    <input type="number" class="form-control" id="productQtyTecidoCortado" min="1" required aria-describedby="productQtyTecidoCortadoFeedback">
+                                    <div id="productQtyTecidoCortadoFeedback" class="invalid-feedback">Digite uma quantidade válida (maior que 0).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productMedida" class="form-label">Medida (Largura x Altura, cm)</label>
-                                    <div class="row">
+                                    <div class="row g-2">
                                         <div class="col">
-                                            <input type="number" step="0.01" class="form-control" id="productMedidaLargura" placeholder="Largura" min="0.01" required>
+                                            <input type="number" step="0.01" class="form-control" id="productMedidaLargura" placeholder="Largura" min="0.01" required aria-describedby="productMedidaLarguraFeedback">
+                                            <div id="productMedidaLarguraFeedback" class="invalid-feedback">Digite uma largura válida.</div>
                                         </div>
-                                        <div class="col-auto">x</div>
+                                        <div class="col-auto d-flex align-items-center">x</div>
                                         <div class="col">
-                                            <input type="number" step="0.01" class="form-control" id="productMedidaAltura" placeholder="Altura" min="0.01" required>
+                                            <input type="number" step="0.01" class="form-control" id="productMedidaAltura" placeholder="Altura" min="0.01" required aria-describedby="productMedidaAlturaFeedback">
+                                            <div id="productMedidaAlturaFeedback" class="invalid-feedback">Digite uma altura válida.</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="productQtyMin" class="form-label">Quantidade Mínima</label>
-                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0">
+                                    <input type="number" step="0.01" class="form-control" id="productQtyMin" min="0" aria-describedby="productQtyMinFeedback">
+                                    <div id="productQtyMinFeedback" class="invalid-feedback">Digite uma quantidade válida (0 ou maior).</div>
                                 </div>
                             </div>
-
-                            <button type="button" class="btn-custom" id="saveProductButton" onclick="saveProduct()">Salvar</button>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Cancelar">Cancelar</button>
+                                <button type="submit" class="btn btn-custom">Salvar</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -379,39 +496,39 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addSupplierModalLabel">Adicionar Fornecedor</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="addSupplierForm">
+                        <form id="addSupplierForm" class="needs-validation" novalidate>
                             <div class="mb-3">
                                 <label for="supplierName" class="form-label">Nome</label>
-                                <input type="text" class="form-control" id="supplierName" required>
+                                <input type="text" class="form-control" id="supplierName" required aria-describedby="supplierNameFeedback">
+                                <div id="supplierNameFeedback" class="invalid-feedback">Digite o nome do fornecedor.</div>
                             </div>
                             <div class="mb-3">
                                 <label for="supplierPhone" class="form-label">Telefone</label>
-                                <input type="tel" class="form-control" id="supplierPhone" required>
+                                <input type="tel" class="form-control" id="supplierPhone" required aria-describedby="supplierPhoneFeedback" pattern="\+?\d{10,15}">
+                                <div id="supplierPhoneFeedback" class="invalid-feedback">Digite um telefone válido (10 a 15 dígitos).</div>
                             </div>
                             <div class="mb-3">
                                 <label for="supplierEmail" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="supplierEmail" required>
+                                <input type="email" class="form-control" id="supplierEmail" required aria-describedby="supplierEmailFeedback">
+                                <div id="supplierEmailFeedback" class="invalid-feedback">Digite um email válido.</div>
                             </div>
-                            <button type="submit" class="btn-custom">Salvar</button>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Cancelar">Cancelar！
+
+                                <button type="submit" class="btn btn-custom">Salvar</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
         const API_URL = "https://estoque-v4.onrender.com";
-        const category = document.getElementById("productCategory");
-        const formTinta = document.getElementById("form-tinta");
-        const formPapel = document.getElementById("form-papel");
-        const formTecido = document.getElementById("form-tecido");
-        const formTecidoCortado = document.getElementById("form-tecido-cortado");
-
-        // Paper type mapping
         const paperTypeMap = {
             papel1: "Art 45gr 160x250",
             papel2: "Art 45gr 180x400",
@@ -421,6 +538,66 @@
             papel6: "Kraft 35gr 160x500"
         };
 
+        // Initialize Chart.js
+        let stockChartInstance = null;
+        function initializeChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            stockChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Tintas', 'Papéis', 'Tecidos', 'Tecidos Cortados'],
+                    datasets: [{
+                        label: 'Quantidade Total',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+                        borderColor: ['#0056b3', '#218838', '#e0a800', '#c82333'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Quantidade' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Categoria' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        title: { display: true, text: 'Resumo do Estoque' }
+                    }
+                }
+            });
+        }
+
+        async function updateChart() {
+            try {
+                const [tintas, papeis, tecidos, tecidosCortados] = await Promise.all([
+                    fetchTinta(),
+                    fetchPapel(),
+                    fetchTecido(),
+                    fetchTecidoCortado()
+                ]);
+
+                const totalTintas = tintas.reduce((sum, tinta) => sum + (tinta.productQty * tinta.productQtyLitros || 0), 0);
+                const totalPapeis = papeis.reduce((sum, papel) => sum + (papel.qtyUnit * papel.qtyMetros || 0), 0);
+                const totalTecidos = tecidos.reduce((sum, tecido) => sum + (tecido.qtyMetros || 0), 0);
+                const totalTecidosCortados = tecidosCortados.reduce((sum, tecido) => sum + (tecido.quantity || 0), 0);
+
+                if (stockChartInstance) {
+                    stockChartInstance.data.datasets[0].data = [totalTintas, totalPapeis, totalTecidos, totalTecidosCortados];
+                    stockChartInstance.update();
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar gráfico:', error);
+                showAlert('Erro ao carregar dados do gráfico', 'danger');
+            }
+        }
+
         // Show alert
         function showAlert(message, type = 'success') {
             const alertContainer = document.createElement('div');
@@ -428,7 +605,7 @@
             alertContainer.role = 'alert';
             alertContainer.innerHTML = `
                 ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
             `;
             document.body.appendChild(alertContainer);
             setTimeout(() => alertContainer.remove(), 5000);
@@ -438,10 +615,11 @@
         async function fetchTinta() {
             try {
                 const response = await fetch(`${API_URL}/products-tinta`);
-                if (!response.ok) throw new Error("Failed to fetch tintas");
+                if (!response.ok) throw new Error("Falha ao buscar tintas");
                 return await response.json();
             } catch (error) {
                 console.error(error);
+                showAlert('Erro ao carregar tintas', 'danger');
                 return [];
             }
         }
@@ -449,10 +627,11 @@
         async function fetchPapel() {
             try {
                 const response = await fetch(`${API_URL}/products-papel`);
-                if (!response.ok) throw new Error("Failed to fetch papéis");
+                if (!response.ok) throw new Error("Falha ao buscar papéis");
                 return await response.json();
             } catch (error) {
                 console.error(error);
+                showAlert('Erro ao carregar papéis', 'danger');
                 return [];
             }
         }
@@ -460,10 +639,11 @@
         async function fetchTecido() {
             try {
                 const response = await fetch(`${API_URL}/products-tecido`);
-                if (!response.ok) throw new Error("Failed to fetch tecidos");
+                if (!response.ok) throw new Error("Falha ao buscar tecidos");
                 return await response.json();
             } catch (error) {
                 console.error(error);
+                showAlert('Erro ao carregar tecidos', 'danger');
                 return [];
             }
         }
@@ -471,12 +651,11 @@
         async function fetchTecidoCortado() {
             try {
                 const response = await fetch(`${API_URL}/products-tecido-cortado`);
-                const data = await response.json();
-                console.log("Resposta da API para tecidos cortados:", data);
-                if (!response.ok) throw new Error("Failed to fetch tecidos cortados");
-                return data;
+                if (!response.ok) throw new Error("Falha ao buscar tecidos cortados");
+                return await response.json();
             } catch (error) {
-                console.error("Erro ao buscar tecidos cortados:", error);
+                console.error(error);
+                showAlert('Erro ao carregar tecidos cortados', 'danger');
                 return [];
             }
         }
@@ -484,10 +663,11 @@
         async function fetchSuppliers() {
             try {
                 const response = await fetch(`${API_URL}/suppliers`);
-                if (!response.ok) throw new Error("Failed to fetch suppliers");
+                if (!response.ok) throw new Error("Falha ao buscar fornecedores");
                 return await response.json();
             } catch (error) {
                 console.error(error);
+                showAlert('Erro ao carregar fornecedores', 'danger');
                 return [];
             }
         }
@@ -495,10 +675,11 @@
         async function fetchProduct(category, id) {
             try {
                 const response = await fetch(`${API_URL}/products-${category}/${id}`);
-                if (!response.ok) throw new Error(`Failed to fetch ${category} ${id}`);
+                if (!response.ok) throw new Error(`Falha ao buscar ${category} ${id}`);
                 return await response.json();
             } catch (error) {
                 console.error(error);
+                showAlert(`Erro ao carregar ${category}`, 'danger');
                 return null;
             }
         }
@@ -508,6 +689,10 @@
             const tintas = await fetchTinta();
             const tableBody = document.getElementById("tintaTableBody");
             tableBody.innerHTML = "";
+            if (tintas.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum dado encontrado</td></tr>';
+                return;
+            }
             tintas.forEach(tinta => {
                 const totalLitros = (tinta.productQty * tinta.productQtyLitros).toFixed(2);
                 const row = document.createElement("tr");
@@ -518,12 +703,12 @@
                     <td>${tinta.productQtyLitros || 0}</td>
                     <td>${totalLitros}</td>
                     <td>${tinta.qtyMin || 0}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id})">
-                            <i class="bi bi-pencil"></i> Editar
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id})" title="Editar tinta" aria-label="Editar tinta">
+                            <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id})">
-                            <i class="bi bi-trash"></i> Remover
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id})" title="Remover tinta" aria-label="Remover tinta">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 `;
@@ -535,22 +720,26 @@
             const papeis = await fetchPapel();
             const tableBody = document.getElementById("papelTableBody");
             tableBody.innerHTML = "";
+            if (papeis.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum dado encontrado</td></tr>';
+                return;
+            }
             papeis.forEach(papel => {
                 const displayName = paperTypeMap[papel.type] || papel.type;
-                const totalMetros = papel.qtyUnit * papel.qtyMetros;
+                const totalMetros = (papel.qtyUnit * papel.qtyMetros).toFixed(2);
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${displayName || '-'}</td>
                     <td>${papel.qtyUnit || 0}</td>
                     <td>${papel.qtyMetros || 0}</td>
-                    <td>${totalMetros || 0}</td>
+                    <td>${totalMetros}</td>
                     <td>${papel.qtyMin || 0}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id})">
-                            <i class="bi bi-pencil"></i> Editar
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id})" title="Editar papel" aria-label="Editar papel">
+                            <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id})">
-                            <i class="bi bi-trash"></i> Remover
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('papel', ${papel.id})" title="Remover papel" aria-label="Remover papel">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 `;
@@ -562,6 +751,10 @@
             const tecidos = await fetchTecido();
             const tableBody = document.getElementById("tecidoTableBody");
             tableBody.innerHTML = "";
+            if (tecidos.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
+                return;
+            }
             tecidos.forEach(tecido => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
@@ -569,12 +762,12 @@
                     <td>${tecido.qtyMetros || 0}</td>
                     <td>${tecido.width || 0}</td>
                     <td>${tecido.qtyMin || 0}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id})">
-                            <i class="bi bi-pencil"></i> Editar
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id})" title="Editar tecido" aria-label="Editar tecido">
+                            <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id})">
-                            <i class="bi bi-trash"></i> Remover
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id})" title="Remover tecido" aria-label="Remover tecido">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 `;
@@ -584,13 +777,10 @@
 
         async function renderTecidoCortadoTable() {
             const tecidosCortados = await fetchTecidoCortado();
-            console.log("Dados para renderizar tecidos cortados:", tecidosCortados);
             const tableBody = document.getElementById("tecidoCortadoTableBody");
             tableBody.innerHTML = "";
-            if (!tecidosCortados || tecidosCortados.length === 0) {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td colspan="5">Nenhum tecido cortado encontrado</td>`;
-                tableBody.appendChild(row);
+            if (tecidosCortados.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
                 return;
             }
             tecidosCortados.forEach(tecido => {
@@ -600,12 +790,12 @@
                     <td>${tecido.quantity || 0}</td>
                     <td>${tecido.measurement || '-'}</td>
                     <td>${tecido.qtyMin || 0}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id || 0})">
-                            <i class="bi bi-pencil"></i> Editar
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id})" title="Editar tecido cortado" aria-label="Editar tecido cortado">
+                            <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id || 0})">
-                            <i class="bi bi-trash"></i> Remover
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id})" title="Remover tecido cortado" aria-label="Remover tecido cortado">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 `;
@@ -617,15 +807,19 @@
             const suppliers = await fetchSuppliers();
             const tableBody = document.getElementById("suppliersTableBody");
             tableBody.innerHTML = "";
+            if (suppliers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum fornecedor encontrado</td></tr>';
+                return;
+            }
             suppliers.forEach(supplier => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${supplier.name || '-'}</td>
                     <td>${supplier.phone || '-'}</td>
                     <td>${supplier.email || '-'}</td>
-                    <td>
-                        <button class="btn btn-danger btn-sm" onclick="removeSupplier(${supplier.id || 0})">
-                            <i class="bi bi-trash"></i> Remover
+                    <td class="text-end">
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeSupplier(${supplier.id})" title="Remover fornecedor" aria-label="Remover fornecedor">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 `;
@@ -633,13 +827,17 @@
             });
         }
 
+        // Form validation
+        function validateForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.add('was-validated');
+            return form.checkValidity();
+        }
+
         // Edit product
         async function editProduct(category, id) {
             const product = await fetchProduct(category, id);
-            if (!product) {
-                showAlert(`Erro ao carregar ${category} para edição`, 'danger');
-                return;
-            }
+            if (!product) return;
 
             document.getElementById("addProductModalLabel").textContent = `Editar ${category.charAt(0).toUpperCase() + category.slice(1)}`;
             document.getElementById("editProductId").value = id;
@@ -681,8 +879,11 @@
             modal.show();
         }
 
-        // Save product (handles both add and edit)
-        async function saveProduct() {
+        // Save product
+        async function saveProduct(event) {
+            event.preventDefault();
+            if (!validateForm('addProductForm')) return;
+
             const editId = document.getElementById("editProductId").value;
             const category = editId ? document.getElementById("editProductCategory").value : document.getElementById("productCategory").value;
 
@@ -695,11 +896,6 @@
                     const productQtyLitros = parseFloat(document.getElementById("productQtyLitros").value);
                     const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
-                    if (!color || !type) throw new Error("Cor e tipo de tinta são obrigatórios");
-                    if (isNaN(productQty) || productQty <= 0) throw new Error("Quantidade deve ser um número positivo");
-                    if (isNaN(productQtyLitros) || productQtyLitros <= 0) throw new Error("Litros por frasco deve ser um número positivo");
-                    if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
-
                     product = { color, type, productQty, productQtyLitros, qtyMin };
                     endpoint = editId ? `${API_URL}/products-tinta/${editId}` : `${API_URL}/products-tinta`;
                     categoryName = "tinta";
@@ -708,11 +904,6 @@
                     const qtyUnit = parseInt(document.getElementById("productQtyUnit").value);
                     const qtyMetros = parseInt(document.getElementById("productQtyMetros").value);
                     const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
-
-                    if (!type) throw new Error("Tipo de papel é obrigatório");
-                    if (isNaN(qtyUnit) || qtyUnit <= 0) throw new Error("Quantidade de rolos deve ser um número positivo");
-                    if (isNaN(qtyMetros) || qtyMetros <= 0) throw new Error("Metros por rolo deve ser um número positivo");
-                    if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
                     product = { type, qtyUnit, qtyMetros, qtyMin };
                     endpoint = editId ? `${API_URL}/products-papel/${editId}` : `${API_URL}/products-papel`;
@@ -723,11 +914,6 @@
                     const width = parseFloat(document.getElementById("productWidth").value);
                     const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
 
-                    if (!type) throw new Error("Tipo de tecido é obrigatório");
-                    if (isNaN(qtyMetros) || qtyMetros <= 0) throw new Error("Quantidade de metros deve ser um número positivo");
-                    if (isNaN(width) || width <= 0) throw new Error("Largura deve ser um número positivo");
-                    if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
-
                     product = { type, qtyMetros, width, qtyMin };
                     endpoint = editId ? `${API_URL}/products-tecido/${editId}` : `${API_URL}/products-tecido`;
                     categoryName = "tecido";
@@ -737,12 +923,6 @@
                     const medidaLargura = parseFloat(document.getElementById("productMedidaLargura").value);
                     const medidaAltura = parseFloat(document.getElementById("productMedidaAltura").value);
                     const qtyMin = parseFloat(document.getElementById("productQtyMin").value) || 0;
-
-                    if (!type) throw new Error("Tipo de tecido cortado é obrigatório");
-                    if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
-                    if (isNaN(medidaLargura) || medidaLargura <= 0) throw new Error("Largura deve ser um número positivo");
-                    if (isNaN(medidaAltura) || medidaAltura <= 0) throw new Error("Altura deve ser um número positivo");
-                    if (qtyMin < 0) throw new Error("Quantidade mínima não pode ser negativa");
 
                     const measurement = `${medidaLargura}x${medidaAltura}`;
                     product = { type, quantity, measurement, qtyMin };
@@ -761,7 +941,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || `Failed to ${editId ? 'edit' : 'add'} ${categoryName}`);
+                    throw new Error(errorData.detail || `Falha ao ${editId ? 'editar' : 'adicionar'} ${categoryName}`);
                 }
 
                 document.getElementById("addProductForm").reset();
@@ -776,8 +956,8 @@
                 else if (categoryName === "tecido-cortado") await renderTecidoCortadoTable();
 
                 await updateProductSelects();
+                await updateChart();
                 showAlert(`${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} ${editId ? 'editado' : 'adicionado'} com sucesso!`);
-
             } catch (error) {
                 console.error(error);
                 showAlert(`Erro: ${error.message}`, 'danger');
@@ -786,35 +966,33 @@
 
         // Remove product
         async function removeProduct(category, id) {
-            if (confirm(`Tem certeza que deseja remover este ${category}?`)) {
-                try {
-                    const endpoint = `${API_URL}/products-${category}/${id}`;
-                    const response = await fetch(endpoint, { method: "DELETE" });
-                    if (!response.ok) throw new Error(`Failed to delete ${category}`);
-                    if (category === "tinta") await renderTintaTable();
-                    else if (category === "papel") await renderPapelTable();
-                    else if (category === "tecido") await renderTecidoTable();
-                    else if (category === "tecido-cortado") await renderTecidoCortadoTable();
-                    await updateProductSelects();
-                    showAlert(`${category.charAt(0).toUpperCase() + category.slice(1)} removido com sucesso!`);
-                } catch (error) {
-                    console.error(error);
-                    showAlert(`Erro ao remover ${category}: ${error.message}`, 'danger');
-                }
+            if (!confirm(`Tem certeza que deseja remover este ${category}?`)) return;
+            try {
+                const endpoint = `${API_URL}/products-${category}/${id}`;
+                const response = await fetch(endpoint, { method: "DELETE" });
+                if (!response.ok) throw new Error(`Falha ao remover ${category}`);
+                if (category === "tinta") await renderTintaTable();
+                else if (category === "papel") await renderPapelTable();
+                else if (category === "tecido") await renderTecidoTable();
+                else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+                await updateProductSelects();
+                await updateChart();
+                showAlert(`${category.charAt(0).toUpperCase() + category.slice(1)} removido com sucesso!`);
+            } catch (error) {
+                console.error(error);
+                showAlert(`Erro ao remover ${category}: ${error.message}`, 'danger');
             }
         }
 
         // Handle stock entry
         async function handleStockEntry(event) {
             event.preventDefault();
+            if (!validateForm('entryForm')) return;
+
             try {
                 const productSelect = document.getElementById("entryProduct").value;
                 const quantity = parseFloat(document.getElementById("entryQuantity").value);
                 const supplierId = document.getElementById("entrySupplier").value;
-
-                if (!productSelect) throw new Error("Selecione um produto");
-                if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
-                if (!supplierId) throw new Error("Selecione um fornecedor");
 
                 const [category, productId] = productSelect.split('_');
                 const entry = {
@@ -832,14 +1010,16 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || "Failed to register entry");
+                    throw new Error(errorData.detail || "Falha ao registrar entrada");
                 }
 
                 document.getElementById("entryForm").reset();
+                document.getElementById("entryForm").classList.remove('was-validated');
                 if (category === "tinta") await renderTintaTable();
                 else if (category === "papel") await renderPapelTable();
                 else if (category === "tecido") await renderTecidoTable();
                 else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+                await updateChart();
                 showAlert("Entrada registrada com sucesso!");
             } catch (error) {
                 console.error(error);
@@ -850,12 +1030,11 @@
         // Handle stock exit
         async function handleStockExit(event) {
             event.preventDefault();
+            if (!validateForm('exitForm')) return;
+
             try {
                 const productSelect = document.getElementById("exitProduct").value;
                 const quantity = parseFloat(document.getElementById("exitQuantity").value);
-
-                if (!productSelect) throw new Error("Selecione um produto");
-                if (isNaN(quantity) || quantity <= 0) throw new Error("Quantidade deve ser um número positivo");
 
                 const [category, productId] = productSelect.split('_');
                 const exit = {
@@ -872,14 +1051,16 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || "Failed to register exit");
+                    throw new Error(errorData.detail || "Falha ao registrar saída");
                 }
 
                 document.getElementById("exitForm").reset();
+                document.getElementById("exitForm").classList.remove('was-validated');
                 if (category === "tinta") await renderTintaTable();
                 else if (category === "papel") await renderPapelTable();
                 else if (category === "tecido") await renderTecidoTable();
                 else if (category === "tecido-cortado") await renderTecidoCortadoTable();
+                await updateChart();
                 showAlert("Saída registrada com sucesso!");
             } catch (error) {
                 console.error(error);
@@ -887,10 +1068,49 @@
             }
         }
 
+        // Handle order submission
+        async function handleOrderSubmission(event) {
+            event.preventDefault();
+            if (!validateForm('orderForm')) return;
+
+            try {
+                const productSelect = document.getElementById("orderProduct").value;
+                const quantity = parseFloat(document.getElementById("orderQuantity").value);
+                const supplierId = document.getElementById("orderSupplier").value;
+
+                const [category, productId] = productSelect.split('_');
+                const order = {
+                    category,
+                    product_id: parseInt(productId),
+                    quantity,
+                    supplier_id: parseInt(supplierId)
+                };
+
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(order)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Falha ao gerar pedido");
+                }
+
+                document.getElementById("orderForm").reset();
+                document.getElementById("orderForm").classList.remove('was-validated');
+                showAlert("Pedido gerado com sucesso!");
+            } catch (error) {
+                console.error(error);
+                showAlert(`Erro ao gerar pedido: ${error.message}`, 'danger');
+            }
+        }
+
         // Search functionality
         document.getElementById("searchInput").addEventListener("input", async function () {
             const query = this.value.toLowerCase();
             const activeTab = document.querySelector("#stockTabs .nav-link.active").id;
+
             if (activeTab === "tinta-tab") {
                 const tintas = await fetchTinta();
                 const filtered = tintas.filter(tinta => 
@@ -899,6 +1119,10 @@
                 );
                 const tableBody = document.getElementById("tintaTableBody");
                 tableBody.innerHTML = "";
+                if (filtered.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum dado encontrado</td></tr>';
+                    return;
+                }
                 filtered.forEach(tinta => {
                     const totalLitros = (tinta.productQty * tinta.productQtyLitros).toFixed(2);
                     const row = document.createElement("tr");
@@ -909,12 +1133,12 @@
                         <td>${tinta.productQtyLitros || 0}</td>
                         <td>${totalLitros}</td>
                         <td>${tinta.qtyMin || 0}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id || 0})">
-                                <i class="bi bi-pencil"></i> Editar
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tinta', ${tinta.id})" title="Editar tinta" aria-label="Editar tinta">
+                                <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id || 0})">
-                                <i class="bi bi-trash"></i> Remover
+                            <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tinta', ${tinta.id})" title="Remover tinta" aria-label="Remover tinta">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     `;
@@ -927,22 +1151,26 @@
                 );
                 const tableBody = document.getElementById("papelTableBody");
                 tableBody.innerHTML = "";
+                if (filtered.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum dado encontrado</td></tr>';
+                    return;
+                }
                 filtered.forEach(papel => {
                     const displayName = paperTypeMap[papel.type] || papel.type;
-                    const totalMetros = papel.qtyUnit * papel.qtyMetros;
+                    const totalMetros = (papel.qtyUnit * papel.qtyMetros).toFixed(2);
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${displayName || '-'}</td>
                         <td>${papel.qtyUnit || 0}</td>
                         <td>${papel.qtyMetros || 0}</td>
-                        <td>${totalMetros || 0}</td>
+                        <td>${totalMetros}</td>
                         <td>${papel.qtyMin || 0}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id || 0})">
-                                <i class="bi bi-pencil"></i> Editar
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('papel', ${papel.id})" title="Editar papel" aria-label="Editar papel">
+                                <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="removeProduct('papel', ${papel.id || 0})">
-                                <i class="bi bi-trash"></i> Remover
+                            <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('papel', ${papel.id})" title="Remover papel" aria-label="Remover papel">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     `;
@@ -955,6 +1183,10 @@
                 );
                 const tableBody = document.getElementById("tecidoTableBody");
                 tableBody.innerHTML = "";
+                if (filtered.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
+                    return;
+                }
                 filtered.forEach(tecido => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
@@ -962,12 +1194,12 @@
                         <td>${tecido.qtyMetros || 0}</td>
                         <td>${tecido.width || 0}</td>
                         <td>${tecido.qtyMin || 0}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id || 0})">
-                                <i class="bi bi-pencil"></i> Editar
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tecido', ${tecido.id})" title="Editar tecido" aria-label="Editar tecido">
+                                <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id || 0})">
-                                <i class="bi bi-trash"></i> Remover
+                            <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tecido', ${tecido.id})" title="Remover tecido" aria-label="Remover tecido">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     `;
@@ -976,14 +1208,13 @@
             } else if (activeTab === "tecido-cortado-tab") {
                 const tecidosCortados = await fetchTecidoCortado();
                 const filtered = tecidosCortados.filter(tecido => 
-                    (tecido.type || '').toLowerCase().includes(query)
+                    (tecido.type || '').toLowerCase().includes(query) ||
+                    (tecido.measurement || '').toLowerCase().includes(query)
                 );
                 const tableBody = document.getElementById("tecidoCortadoTableBody");
                 tableBody.innerHTML = "";
                 if (filtered.length === 0) {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `<td colspan="5">Nenhum tecido cortado encontrado</td>`;
-                    tableBody.appendChild(row);
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado</td></tr>';
                     return;
                 }
                 filtered.forEach(tecido => {
@@ -993,12 +1224,12 @@
                         <td>${tecido.quantity || 0}</td>
                         <td>${tecido.measurement || '-'}</td>
                         <td>${tecido.qtyMin || 0}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id || 0})">
-                                <i class="bi bi-pencil"></i> Editar
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="editProduct('tecido-cortado', ${tecido.id})" title="Editar tecido cortado" aria-label="Editar tecido cortado">
+                                <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id || 0})">
-                                <i class="bi bi-trash"></i> Remover
+                            <button class="btn btn-outline-danger btn-sm" onclick="removeProduct('tecido-cortado', ${tecido.id})" title="Remover tecido cortado" aria-label="Remover tecido cortado">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     `;
@@ -1013,7 +1244,6 @@
             const papeis = await fetchPapel();
             const tecidos = await fetchTecido();
             const tecidosCortados = await fetchTecidoCortado();
-            console.log("Tecidos cortados para selects:", tecidosCortados);
             const selects = ["entryProduct", "exitProduct", "orderProduct"];
             selects.forEach(id => {
                 const select = document.getElementById(id);
@@ -1038,8 +1268,8 @@
                 });
                 tecidosCortados.forEach(tecido => {
                     const option = document.createElement("option");
-                    option.value = `tecido-cortado_${tecido.id || 0}`;
-                    option.textContent = `Tecido Cortado: ${tecido.type || 'Desconhecido'} (${tecido.measurement || 'Desconhecida'})`;
+                    option.value = `tecido-cortado_${tecido.id}`;
+                    option.textContent = `Tecido Cortado: ${tecido.type} (${tecido.measurement || 'Desconhecida'})`;
                     select.appendChild(option);
                 });
             });
@@ -1048,12 +1278,12 @@
         // Supplier functions
         async function addSupplier(event) {
             event.preventDefault();
+            if (!validateForm('addSupplierForm')) return;
+
             try {
                 const name = document.getElementById("supplierName").value;
                 const phone = document.getElementById("supplierPhone").value;
                 const email = document.getElementById("supplierEmail").value;
-
-                if (!name || !phone || !email) throw new Error("Todos os campos são obrigatórios");
 
                 const response = await fetch(`${API_URL}/suppliers`, {
                     method: "POST",
@@ -1063,10 +1293,11 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || "Failed to add supplier");
+                    throw new Error(errorData.detail || "Falha ao adicionar fornecedor");
                 }
 
                 document.getElementById("addSupplierForm").reset();
+                document.getElementById("addSupplierForm").classList.remove('was-validated');
                 const modal = bootstrap.Modal.getInstance(document.getElementById("addSupplierModal"));
                 modal.hide();
                 await renderSuppliers();
@@ -1079,17 +1310,16 @@
         }
 
         async function removeSupplier(id) {
-            if (confirm("Tem certeza que deseja remover este fornecedor?")) {
-                try {
-                    const response = await fetch(`${API_URL}/suppliers/${id}`, { method: "DELETE" });
-                    if (!response.ok) throw new Error("Failed to delete supplier");
-                    await renderSuppliers();
-                    await updateSupplierSelect();
-                    showAlert("Fornecedor removido com sucesso!");
-                } catch (error) {
-                    console.error(error);
-                    showAlert(`Erro ao remover fornecedor: ${error.message}`, 'danger');
-                }
+            if (!confirm("Tem certeza que deseja remover este fornecedor?")) return;
+            try {
+                const response = await fetch(`${API_URL}/suppliers/${id}`, { method: "DELETE" });
+                if (!response.ok) throw new Error("Falha ao remover fornecedor");
+                await renderSuppliers();
+                await updateSupplierSelect();
+                showAlert("Fornecedor removido com sucesso!");
+            } catch (error) {
+                console.error(error);
+                showAlert(`Erro ao remover fornecedor: ${error.message}`, 'danger');
             }
         }
 
@@ -1109,74 +1339,75 @@
         }
 
         // Form visibility
-        category.addEventListener("change", () => {
-            formTinta.classList.add("hidden-form");
-            formPapel.classList.add("hidden-form");
-            formTecido.classList.add("hidden-form");
-            formTecidoCortado.classList.add("hidden-form");
-            if (category.value === "tinta") {
-                formTinta.classList.remove("hidden-form");
-            } else if (category.value === "papel") {
-                formPapel.classList.remove("hidden-form");
-            } else if (category.value === "tecido") {
-                formTecido.classList.remove("hidden-form");
-            } else if (category.value === "tecido-cortado") {
-                formTecidoCortado.classList.remove("hidden-form");
+        document.getElementById("productCategory").addEventListener("change", () => {
+            const forms = ["form-tinta", "form-papel", "form-tecido", "form-tecido-cortado"];
+            forms.forEach(formId => document.getElementById(formId).classList.add("hidden-form"));
+            const selectedForm = `form-${document.getElementById("productCategory").value}`;
+            if (forms.includes(selectedForm)) {
+                document.getElementById(selectedForm).classList.remove("hidden-form");
             }
         });
 
         // Tab change handling
         document.getElementById("stockTabs").addEventListener("shown.bs.tab", async function (event) {
             const target = event.target.id;
-            if (target === "tinta-tab") {
-                await renderTintaTable();
-            } else if (target === "papel-tab") {
-                await renderPapelTable();
-            } else if (target === "tecido-tab") {
-                await renderTecidoTable();
-            } else if (target === "tecido-cortado-tab") {
-                await renderTecidoCortadoTable();
-            }
+            if (target === "tinta-tab") await renderTintaTable();
+            else if (target === "papel-tab") await renderPapelTable();
+            else if (target === "tecido-tab") await renderTecidoTable();
+            else if (target === "tecido-cortado-tab") await renderTecidoCortadoTable();
         });
 
         // UI functions
         function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("active");
+            const sidebar = document.getElementById("sidebar");
+            const content = document.getElementById("content");
+            sidebar.classList.toggle("active");
+            content.classList.toggle("full");
         }
 
         function showSection(sectionId) {
-            document.querySelectorAll(".section").forEach(section => section.style.display = "none");
-            document.getElementById(`${sectionId}Section`).style.display = "block";
-            if (sectionId === "stock") {
-                renderTintaTable();
-            }
+            document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
+            document.getElementById(`${sectionId}Section`).classList.add("active");
+            document.querySelectorAll("#sidebar .nav-link").forEach(link => link.classList.remove("active"));
+            document.querySelector(`#sidebar .nav-link[onclick*='${sectionId}']`).classList.add("active");
+            if (sectionId === "stock") renderTintaTable();
+            if (sectionId === "charts") updateChart();
             if (window.innerWidth <= 768) toggleSidebar();
         }
 
-        // Prepare add product
         function prepareAddProduct() {
             document.getElementById("addProductForm").reset();
+            document.getElementById("addProductForm").classList.remove('was-validated');
             document.getElementById("addProductModalLabel").textContent = "Adicionar Produto";
             document.getElementById("editProductId").value = "";
             document.getElementById("editProductCategory").value = "";
             document.getElementById("productCategory").value = "";
-            formTinta.classList.add("hidden-form");
-            formPapel.classList.add("hidden-form");
-            formTecido.classList.add("hidden-form");
-            formTecidoCortado.classList.add("hidden-form");
+            const forms = ["form-tinta", "form-papel", "form-tecido", "form-tecido-cortado"];
+            forms.forEach(formId => document.getElementById(formId).classList.add("hidden-form"));
+        }
+
+        function logout() {
+            if (confirm("Deseja sair do sistema?")) {
+                // Implementar lógica de logout (ex.: limpar token, redirecionar)
+                showAlert("Logout realizado com sucesso!");
+            }
         }
 
         // Initialize
         document.addEventListener("DOMContentLoaded", async () => {
+            initializeChart();
             await renderTintaTable();
             await renderSuppliers();
             await updateSupplierSelect();
             await updateProductSelects();
+            await updateChart();
             showSection("stock");
 
+            document.getElementById("addProductForm").addEventListener("submit", saveProduct);
             document.getElementById("addSupplierForm").addEventListener("submit", addSupplier);
             document.getElementById("entryForm").addEventListener("submit", handleStockEntry);
             document.getElementById("exitForm").addEventListener("submit", handleStockExit);
+            document.getElementById("orderForm").addEventListener("submit", handleOrderSubmission);
         });
     </script>
 </body>
